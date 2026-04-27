@@ -1,40 +1,40 @@
-// controllers/playerController.js
-// Handles all logic for Player routes
+const { Player, Session, Score } = require('../models/index');
 
-const Player = require('../models/Player');
+// Get all players
+exports.getAllPlayers = async (req, res) => {
+  try {
+    const players = await Player.findAll();
+    res.json(players);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
-// @desc  Create a new player
-// @route POST /api/players
+// Get one player with their sessions and scores
+exports.getPlayerById = async (req, res) => {
+  try {
+    const player = await Player.findByPk(req.params.id, {
+      include: [
+        { model: Session },
+        { model: Score },
+      ],
+    });
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+    res.json(player);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Create a player
 exports.createPlayer = async (req, res) => {
   try {
-    const player = await Player.create(req.body);
-    res.status(201).json({ success: true, data: player });
-  } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
-  }
-};
-
-// @desc  Get all players
-// @route GET /api/players
-exports.getPlayers = async (req, res) => {
-  try {
-    const players = await Player.find({ isActive: true }).sort({ createdAt: -1 });
-    res.json({ success: true, count: players.length, data: players });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// @desc  Get a single player by ID
-// @route GET /api/players/:id
-exports.getPlayer = async (req, res) => {
-  try {
-    const player = await Player.findById(req.params.id);
-    if (!player) {
-      return res.status(404).json({ success: false, message: 'Player not found' });
-    }
-    res.json({ success: true, data: player });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    const { username, email } = req.body;
+    if (!username || !email)
+      return res.status(400).json({ error: 'username and email are required' });
+    const player = await Player.create({ username, email });
+    res.status(201).json(player);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };

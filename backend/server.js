@@ -2,16 +2,15 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-const syncDatabase = require('./db/sync');
-const playerRoutes = require('./routes/players');
-const sessionRoutes = require('./routes/sessions');
-const scoreRoutes = require('./routes/scores');
+const { sequelize } = require('./models/index');
+const playerRoutes    = require('./routes/players');
+const sessionRoutes   = require('./routes/sessions');
+const scoreRoutes     = require('./routes/scores');
 const analyticsRoutes = require('./routes/analytics');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
@@ -21,14 +20,19 @@ app.get('/', (req, res) => {
 });
 
 // Routes
-app.use('/players', playerRoutes);
-app.use('/sessions', sessionRoutes);
-app.use('/scores', scoreRoutes);
+app.use('/players',   playerRoutes);
+app.use('/sessions',  sessionRoutes);
+app.use('/scores',    scoreRoutes);
 app.use('/analytics', analyticsRoutes);
 
-// Start server after DB is ready
-syncDatabase().then(() => {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+// Sync DB then start server
+sequelize.authenticate()
+  .then(() => sequelize.sync({ alter: true }))
+  .then(() => {
+    console.log('✅ Database ready.');
+    app.listen(PORT, () => console.log(`🚀 Server on http://localhost:${PORT}`));
+  })
+  .catch(err => {
+    console.error('❌ DB Error:', err.message);
+    process.exit(1);
   });
-});
