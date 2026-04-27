@@ -4,7 +4,7 @@ A full-stack web application that tracks and visualizes gaming data including pl
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -16,7 +16,7 @@ A full-stack web application that tracks and visualizes gaming data including pl
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 gaming-stats-tracker/
@@ -40,7 +40,7 @@ gaming-stats-tracker/
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 
@@ -67,7 +67,7 @@ ng serve
 
 ---
 
-## 📊 Features
+##  Features
 
 - 🏆 Track players, scores, and game sessions
 - 📈 Line chart: scores over time
@@ -78,7 +78,7 @@ ng serve
 
 ---
 
-## 🪜 Build Steps (Progress)
+##  Build Steps (Progress)
 
 - [x] Step 1: Environment Setup & GitHub Repo
 - [ ] Step 2: Backend Initialization
