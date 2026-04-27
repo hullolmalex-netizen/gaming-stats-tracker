@@ -97,8 +97,5 @@ ng serve
 
 **Ahmed Aziz Dimassi** — 2nd year Big Data student at EPI
 
----
 
-## 📝 License
 
-MIT
