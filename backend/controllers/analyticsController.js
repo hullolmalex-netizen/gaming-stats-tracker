@@ -7,36 +7,38 @@ exports.getAnalytics = async (req, res) => {
     const playtime = await Session.findAll({
       attributes: [
         'playerId',
-        [fn('SUM', col('durationMinutes')), 'totalMinutes'],
+        [fn('SUM', col('Session.durationMinutes')), 'totalMinutes'],
       ],
-      group: ['playerId'],
+      group: ['Session.playerId'],
       include: [{ model: Player, attributes: ['username'] }],
       order: [[literal('totalMinutes'), 'DESC']],
       limit: 10,
+      subQuery: false,
     });
 
     // Top players by total score
     const topScorers = await Score.findAll({
       attributes: [
         'playerId',
-        [fn('SUM', col('points')), 'totalScore'],
-        [fn('AVG', col('points')), 'avgScore'],
-        [fn('COUNT', col('id')), 'gamesPlayed'],
+        [fn('SUM', col('Score.points')), 'totalScore'],
+        [fn('AVG', col('Score.points')), 'avgScore'],
+        [fn('COUNT', col('Score.id')), 'gamesPlayed'],
       ],
-      group: ['playerId'],
+      group: ['Score.playerId'],
       include: [{ model: Player, attributes: ['username'] }],
       order: [[literal('totalScore'), 'DESC']],
       limit: 10,
+      subQuery: false,
     });
 
     // Activity per game (how many sessions per game)
     const gameActivity = await Session.findAll({
       attributes: [
         'gameName',
-        [fn('COUNT', col('id')), 'sessionCount'],
-        [fn('SUM', col('durationMinutes')), 'totalMinutes'],
+        [fn('COUNT', col('Session.id')), 'sessionCount'],
+        [fn('SUM', col('Session.durationMinutes')), 'totalMinutes'],
       ],
-      group: ['gameName'],
+      group: ['Session.gameName'],
       order: [[literal('sessionCount'), 'DESC']],
     });
 
