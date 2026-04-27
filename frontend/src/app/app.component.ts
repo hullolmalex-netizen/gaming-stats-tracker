@@ -3,43 +3,25 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatListModule } from '@angular/material/list';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [
-    RouterOutlet,
-    RouterLink,
-    RouterLinkActive,
-    MatToolbarModule,
-    MatButtonModule,
-    MatIconModule,
-    MatSidenavModule,
-    MatListModule,
-  ],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatToolbarModule, MatButtonModule, MatIconModule],
   template: `
-    <mat-toolbar color="primary" class="toolbar">
-      <mat-icon>sports_esports</mat-icon>
-      <span style="margin-left:8px">Gaming Stats Tracker</span>
+    <mat-toolbar class="app-toolbar">
+      <mat-icon style="color:#6c63ff; font-size:28px; width:28px">sports_esports</mat-icon>
+      <span class="toolbar-brand">GStats</span>
       <span class="spacer"></span>
-      <a mat-button routerLink="/dashboard" routerLinkActive="active-link">Dashboard</a>
-      <a mat-button routerLink="/players" routerLinkActive="active-link">Players</a>
+      <a mat-button class="nav-link" routerLink="/dashboard" routerLinkActive="active-link">
+        <mat-icon style="font-size:18px;vertical-align:middle;margin-right:4px">dashboard</mat-icon>Dashboard
+      </a>
+      <a mat-button class="nav-link" routerLink="/players" routerLinkActive="active-link">
+        <mat-icon style="font-size:18px;vertical-align:middle;margin-right:4px">people</mat-icon>Players
+      </a>
     </mat-toolbar>
-
-    <main class="main-content">
-      <router-outlet />
-    </main>
+    <main><router-outlet /></main>
   `,
-  styles: [`
-    .toolbar { position: sticky; top: 0; z-index: 100; }
-    .spacer { flex: 1 1 auto; }
-    .main-content { min-height: calc(100vh - 64px); }
-    .active-link { background: rgba(255,255,255,0.15) !important; border-radius: 4px; }
-    a { text-decoration: none; color: white; }
-  `]
+  styles: [`:host { display: block; min-height: 100vh; }`]
 })
-export class AppComponent {
-  title = 'Gaming Stats Tracker';
-}
+export class AppComponent {}

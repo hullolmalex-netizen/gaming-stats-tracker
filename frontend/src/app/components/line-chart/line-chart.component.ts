@@ -1,5 +1,4 @@
 import { Component, Input, OnInit, OnChanges, ElementRef, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Chart, LineController, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend, Filler } from 'chart.js';
 
 Chart.register(LineController, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend, Filler);
@@ -7,23 +6,21 @@ Chart.register(LineController, LineElement, PointElement, CategoryScale, LinearS
 @Component({
   selector: 'app-line-chart',
   standalone: true,
-  imports: [CommonModule],
-  template: `<canvas #chartCanvas></canvas>`,
-  styles: [`canvas { width: 100% !important; height: 300px !important; }`]
+  imports: [],
+  template: `<canvas #c></canvas>`,
+  styles: [`canvas { width:100%!important; height:280px!important; }`]
 })
 export class LineChartComponent implements OnInit, OnChanges {
   @Input() labels: string[] = [];
   @Input() datasets: { label: string; data: number[]; color: string }[] = [];
-  @Input() title: string = 'Line Chart';
-  @ViewChild('chartCanvas', { static: true }) chartCanvas!: ElementRef;
-
+  @ViewChild('c', { static: true }) ref!: ElementRef;
   private chart!: Chart;
 
-  ngOnInit() { this.buildChart(); }
-  ngOnChanges() { if (this.chart) { this.chart.destroy(); this.buildChart(); } }
+  ngOnInit() { this.build(); }
+  ngOnChanges() { if (this.chart) { this.chart.destroy(); this.build(); } }
 
-  buildChart() {
-    this.chart = new Chart(this.chartCanvas.nativeElement, {
+  build() {
+    this.chart = new Chart(this.ref.nativeElement, {
       type: 'line',
       data: {
         labels: this.labels,
@@ -31,19 +28,26 @@ export class LineChartComponent implements OnInit, OnChanges {
           label: ds.label,
           data: ds.data,
           borderColor: ds.color,
-          backgroundColor: ds.color + '22',
+          backgroundColor: ds.color + '33',
           fill: true,
           tension: 0.4,
-          pointRadius: 4,
-          pointHoverRadius: 6,
+          pointRadius: 6,
+          pointHoverRadius: 9,
+          pointBackgroundColor: ds.color,
+          pointBorderColor: '#0a0a1a',
+          pointBorderWidth: 2,
         }))
       },
       options: {
         responsive: true,
-        plugins: { legend: { position: 'top' } },
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#8888aa', font: { size: 13 } } },
+          tooltip: { backgroundColor: '#0f0f2e', borderColor: '#6c63ff', borderWidth: 1, titleColor: '#00d4ff', bodyColor: '#e8e8ff' }
+        },
         scales: {
-          y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
-          x: { grid: { display: false } }
+          y: { beginAtZero: true, grid: { color: 'rgba(108,99,255,0.1)' }, ticks: { color: '#8888aa' } },
+          x: { grid: { display: false }, ticks: { color: '#8888aa' } }
         }
       }
     });

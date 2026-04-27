@@ -1,122 +1,110 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatIconModule } from '@angular/material/icon';
 import { ApiService } from '../../services/api.service';
 
 @Component({
   selector: 'app-player-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatCardModule, MatButtonModule, MatIconModule, MatTabsModule, MatProgressSpinnerModule],
+  imports: [CommonModule, RouterLink, MatTabsModule, MatIconModule],
   template: `
     <div class="container">
-      <a mat-button routerLink="/players" style="margin-bottom:16px; display:inline-flex; align-items:center">
-        <mat-icon>arrow_back</mat-icon> Back to Players
+      <a class="view-btn" routerLink="/players" style="margin-bottom:24px;display:inline-flex">
+        <mat-icon style="font-size:16px;width:16px;height:16px">arrow_back</mat-icon>
+        Back
       </a>
 
-      <div *ngIf="loading" style="text-align:center; padding:40px">
-        <mat-spinner diameter="48" style="margin:0 auto"></mat-spinner>
+      <div *ngIf="loading" style="text-align:center;padding:80px">
+        <div style="width:56px;height:56px;border:4px solid rgba(108,99,255,0.2);border-top-color:#6c63ff;border-radius:50%;margin:0 auto;animation:spin 0.8s linear infinite"></div>
       </div>
 
-      <div *ngIf="!loading && player">
-        <mat-card class="mb-16">
-          <mat-card-header>
-            <div mat-card-avatar class="player-avatar">{{ player.username[0].toUpperCase() }}</div>
-            <mat-card-title style="font-size:22px">{{ player.username }}</mat-card-title>
-            <mat-card-subtitle>{{ player.email }}</mat-card-subtitle>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="stats-row">
-              <div class="stat">
-                <span class="stat-value">{{ player.Sessions?.length || 0 }}</span>
-                <span class="stat-label">Sessions</span>
-              </div>
-              <div class="stat">
-                <span class="stat-value">{{ player.Scores?.length || 0 }}</span>
-                <span class="stat-label">Scores</span>
-              </div>
-              <div class="stat">
-                <span class="stat-value">{{ getTotalMinutes() }}h</span>
-                <span class="stat-label">Playtime</span>
-              </div>
-              <div class="stat">
-                <span class="stat-value">{{ getBestScore() }}</span>
-                <span class="stat-label">Best Score</span>
-              </div>
+      <ng-container *ngIf="!loading && player">
+
+        <!-- Player Header -->
+        <div class="glass-card mb-20" style="display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+          <div class="player-avatar" style="width:72px;height:72px;font-size:28px">{{ player.username[0].toUpperCase() }}</div>
+          <div style="flex:1">
+            <div class="player-name" style="font-size:22px">{{ player.username }}</div>
+            <div class="player-email">{{ player.email }}</div>
+          </div>
+          <div style="display:flex;gap:32px;flex-wrap:wrap">
+            <div style="text-align:center">
+              <div class="kpi-value" style="font-size:28px">{{ player.Sessions?.length || 0 }}</div>
+              <div class="kpi-label">Sessions</div>
             </div>
-          </mat-card-content>
-        </mat-card>
+            <div style="text-align:center">
+              <div class="kpi-value" style="font-size:28px">{{ player.Scores?.length || 0 }}</div>
+              <div class="kpi-label">Scores</div>
+            </div>
+            <div style="text-align:center">
+              <div class="kpi-value" style="font-size:28px">{{ getTotalMinutes() }}h</div>
+              <div class="kpi-label">Playtime</div>
+            </div>
+            <div style="text-align:center">
+              <div class="kpi-value" style="font-size:28px;color:var(--warning)">{{ getBestScore() | number }}</div>
+              <div class="kpi-label">Best Score</div>
+            </div>
+          </div>
+        </div>
 
-        <mat-tab-group>
-          <mat-tab label="🎮 Sessions">
-            <table class="stats-table" *ngIf="player.Sessions?.length">
-              <thead><tr><th>Game</th><th>Duration</th><th>Date</th></tr></thead>
-              <tbody>
-                <tr *ngFor="let s of player.Sessions">
-                  <td>{{ s.gameName }}</td>
-                  <td>{{ s.durationMinutes }} min</td>
-                  <td>{{ s.playedAt | date:'mediumDate' }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </mat-tab>
+        <!-- Tabs -->
+        <div class="glass-card">
+          <mat-tab-group mat-stretch-tabs="false" animationDuration="300ms">
+            <mat-tab label="🎮 Sessions ({{ player.Sessions?.length }})">
+              <table class="stats-table" style="margin-top:16px">
+                <thead><tr><th>Game</th><th>Duration</th><th>Date</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let s of player.Sessions">
+                    <td><strong>{{ s.gameName }}</strong></td>
+                    <td style="color:var(--accent)">{{ s.durationMinutes }} min</td>
+                    <td style="color:var(--text-muted)">{{ s.playedAt | date:'mediumDate' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </mat-tab>
+            <mat-tab label="🏆 Scores ({{ player.Scores?.length }})">
+              <table class="stats-table" style="margin-top:16px">
+                <thead><tr><th>Game</th><th>Points</th><th>Date</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let s of player.Scores">
+                    <td><strong>{{ s.gameName }}</strong></td>
+                    <td style="color:var(--warning);font-family:'Orbitron',monospace;font-size:14px">{{ s.points | number }}</td>
+                    <td style="color:var(--text-muted)">{{ s.scoredAt | date:'mediumDate' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </mat-tab>
+          </mat-tab-group>
+        </div>
 
-          <mat-tab label="🏆 Scores">
-            <table class="stats-table" *ngIf="player.Scores?.length">
-              <thead><tr><th>Game</th><th>Points</th><th>Date</th></tr></thead>
-              <tbody>
-                <tr *ngFor="let s of player.Scores">
-                  <td>{{ s.gameName }}</td>
-                  <td><strong>{{ s.points | number }}</strong></td>
-                  <td>{{ s.scoredAt | date:'mediumDate' }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </mat-tab>
-        </mat-tab-group>
-      </div>
+      </ng-container>
     </div>
   `,
   styles: [`
-    .player-avatar {
-      background: #3f51b5; color: white;
-      width: 48px; height: 48px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px; font-weight: bold;
-    }
-    .stats-row { display: flex; gap: 32px; padding: 16px 0; flex-wrap: wrap; }
-    .stat { display: flex; flex-direction: column; align-items: center; }
-    .stat-value { font-size: 28px; font-weight: 700; color: #3f51b5; }
-    .stat-label { font-size: 12px; color: #666; text-transform: uppercase; }
-    .stats-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    .stats-table th { background: #3f51b5; color: white; padding: 10px 14px; text-align: left; }
-    .stats-table td { padding: 10px 14px; border-bottom: 1px solid #e0e0e0; }
-    .stats-table tr:hover td { background: #f5f5f5; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .mb-20 { margin-bottom: 20px; }
+    ::ng-deep .mat-mdc-tab .mdc-tab__text-label { color: var(--text-muted) !important; font-family: 'Rajdhani',sans-serif; font-size:15px; font-weight:600; letter-spacing:1px; }
+    ::ng-deep .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label { color: var(--accent) !important; }
+    ::ng-deep .mat-mdc-tab-indicator__content--underline { border-color: var(--accent) !important; }
   `]
 })
 export class PlayerDetailComponent implements OnInit {
   player: any = null;
   loading = true;
-
   constructor(private api: ApiService, private route: ActivatedRoute) {}
-
   ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     this.api.getPlayer(id).subscribe({
-      next: (data) => { this.player = data; this.loading = false; },
-      error: (err) => { console.error(err); this.loading = false; }
+      next: (d) => { this.player = d; this.loading = false; },
+      error: (e) => { console.error(e); this.loading = false; }
     });
   }
-
   getTotalMinutes(): string {
-    const mins = this.player?.Sessions?.reduce((s: number, x: any) => s + x.durationMinutes, 0) || 0;
-    return (mins / 60).toFixed(1);
+    const m = this.player?.Sessions?.reduce((s: number, x: any) => s + x.durationMinutes, 0) || 0;
+    return (m / 60).toFixed(1);
   }
-
   getBestScore(): number {
     return Math.max(...(this.player?.Scores?.map((s: any) => s.points) || [0]));
   }

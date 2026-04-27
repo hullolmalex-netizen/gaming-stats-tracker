@@ -1,5 +1,4 @@
 import { Component, Input, OnInit, OnChanges, ElementRef, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Chart, PieController, ArcElement, Tooltip, Legend } from 'chart.js';
 
 Chart.register(PieController, ArcElement, Tooltip, Legend);
@@ -7,38 +6,37 @@ Chart.register(PieController, ArcElement, Tooltip, Legend);
 @Component({
   selector: 'app-pie-chart',
   standalone: true,
-  imports: [CommonModule],
-  template: `<canvas #chartCanvas></canvas>`,
-  styles: [`canvas { width: 100% !important; height: 300px !important; }`]
+  imports: [],
+  template: `<canvas #c></canvas>`,
+  styles: [`canvas { width:100%!important; height:280px!important; }`]
 })
 export class PieChartComponent implements OnInit, OnChanges {
   @Input() labels: string[] = [];
   @Input() data: number[] = [];
-  @Input() title: string = 'Pie Chart';
-  @ViewChild('chartCanvas', { static: true }) chartCanvas!: ElementRef;
-
+  @ViewChild('c', { static: true }) ref!: ElementRef;
   private chart!: Chart;
 
-  ngOnInit() { this.buildChart(); }
-  ngOnChanges() { if (this.chart) { this.chart.destroy(); this.buildChart(); } }
+  ngOnInit() { this.build(); }
+  ngOnChanges() { if (this.chart) { this.chart.destroy(); this.build(); } }
 
-  buildChart() {
-    this.chart = new Chart(this.chartCanvas.nativeElement, {
+  build() {
+    this.chart = new Chart(this.ref.nativeElement, {
       type: 'pie',
       data: {
         labels: this.labels,
         datasets: [{
           data: this.data,
-          backgroundColor: ['#3f51b5','#e91e63','#00bcd4','#ff9800','#4caf50'],
-          borderWidth: 2,
-          borderColor: '#fff',
+          backgroundColor: ['#6c63ff','#00d4ff','#f72585','#ff9100','#00e676'],
+          borderWidth: 3,
+          borderColor: '#0a0a1a',
         }]
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'bottom' },
-          tooltip: { callbacks: { label: (ctx) => ` ${ctx.label}: ${ctx.parsed} sessions` } }
+          legend: { position: 'bottom', labels: { color: '#8888aa', padding: 16, font: { size: 13 } } },
+          tooltip: { backgroundColor: '#0f0f2e', borderColor: '#6c63ff', borderWidth: 1, titleColor: '#00d4ff', bodyColor: '#e8e8ff' }
         }
       }
     });
