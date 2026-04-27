@@ -19,6 +19,14 @@ export class ApiService {
     return this.http.post<any>(`${this.base}/players`, data);
   }
 
+  updatePlayer(id: number, data: { username: string; email: string }): Observable<any> {
+    return this.http.put<any>(`${this.base}/players/${id}`, data);
+  }
+
+  deletePlayer(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.base}/players/${id}`);
+  }
+
   createSession(data: { playerId: number; gameName: string; durationMinutes: any; playedAt: string }): Observable<any> {
     return this.http.post<any>(`${this.base}/sessions`, data);
   }
