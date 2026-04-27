@@ -1,41 +1,38 @@
-// models/Session.js
-// Represents a single game session played by a player
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+const Player = require('./Player');
 
-const mongoose = require('mongoose');
-
-const SessionSchema = new mongoose.Schema(
-  {
-    player: {
-      type: mongoose.Schema.Types.ObjectId, // Links to a Player document
-      ref: 'Player',
-      required: true
-    },
-    game: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    startTime: {
-      type: Date,
-      required: true
-    },
-    endTime: {
-      type: Date,
-      required: true
-    },
-    duration: {
-      type: Number, // in minutes (calculated from start/end)
-      required: true
-    },
-    result: {
-      type: String,
-      enum: ['win', 'loss', 'draw'], // only these 3 values allowed
-      default: 'draw'
-    }
+const Session = sequelize.define('Session', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
   },
-  {
-    timestamps: true
-  }
-);
+  playerId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'players', key: 'id' },
+  },
+  gameName: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  durationMinutes: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
+  playedAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+  },
+}, {
+  tableName: 'sessions',
+  timestamps: true,
+});
 
-module.exports = mongoose.model('Session', SessionSchema);
+// Relationship: One Player → Many Sessions
+Player.hasMany(Session, { foreignKey: 'playerId' });
+Session.belongsTo(Player, { foreignKey: 'playerId' });
+
+module.exports = Session;

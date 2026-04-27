@@ -1,14 +1,40 @@
-// routes/analytics.js
 const express = require('express');
 const router = express.Router();
-const {
-  getTopPlayers,
-  getScoreTrend,
-  getActivityDistribution
-} = require('../controllers/analyticsController');
+const { fn, col, literal } = require('sequelize');
+const Player = require('../models/Player');
+const Session = require('../models/Session');
+const Score = require('../models/Score');
 
-router.get('/top-players', getTopPlayers);   // GET /api/analytics/top-players
-router.get('/score-trend', getScoreTrend);   // GET /api/analytics/score-trend
-router.get('/activity', getActivityDistribution); // GET /api/analytics/activity
+// GET /analytics — returns summary stats
+router.get('/', async (req, res) => {
+  try {
+    // Total playtime per player
+    const playtime = await Session.findAll({
+      attributes: [
+        'playerId',
+        [fn('SUM', col('durationMinutes')), 'totalMinutes'],
+      ],
+      group: ['playerId'],
+      include: [{ model: Player, attributes: ['username'] }],
+      order: [[literal('totalMinutes'), 'DESC']],
+    });
+
+    // Average score per player
+    const avgScores = await Score.findAll({
+      attributes: [
+        'playerId',
+        [fn('AVG', col('points')), 'avgScore'],
+        [fn('SUM', col('points')), 'totalScore'],
+      ],
+      group: ['playerId'],
+      include: [{ model: Player, attributes: ['username'] }],
+      order: [[literal('totalScore'), 'DESC']],
+    });
+
+    res.json({ playtime, avgScores });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;

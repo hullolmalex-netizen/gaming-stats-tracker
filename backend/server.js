@@ -1,40 +1,34 @@
-// server.js
-// Entry point for the Gaming Stats Tracker backend
-
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
-const connectDB = require('./config/db');
+require('dotenv').config();
 
-// Load environment variables
-dotenv.config();
-
-// Connect to MongoDB
-connectDB();
+const syncDatabase = require('./db/sync');
+const playerRoutes = require('./routes/players');
+const sessionRoutes = require('./routes/sessions');
+const scoreRoutes = require('./routes/scores');
+const analyticsRoutes = require('./routes/analytics');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-// --- Middleware ---
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// --- Routes ---
-app.use('/api/players',   require('./routes/players'));
-app.use('/api/sessions',  require('./routes/sessions'));
-app.use('/api/scores',    require('./routes/scores'));
-app.use('/api/analytics', require('./routes/analytics'));
-
 // Health check
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    message: '🎮 Gaming Stats Tracker API is running!',
-    timestamp: new Date().toISOString()
-  });
+app.get('/', (req, res) => {
+  res.json({ message: '🎮 Gaming Stats Tracker API is running!' });
 });
 
-// --- Start Server ---
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+// Routes
+app.use('/players', playerRoutes);
+app.use('/sessions', sessionRoutes);
+app.use('/scores', scoreRoutes);
+app.use('/analytics', analyticsRoutes);
+
+// Start server after DB is ready
+syncDatabase().then(() => {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  });
 });

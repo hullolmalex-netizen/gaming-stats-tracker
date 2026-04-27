@@ -1,41 +1,29 @@
-// models/Player.js
-// Represents a gamer registered in the system
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const mongoose = require('mongoose');
-
-const PlayerSchema = new mongoose.Schema(
-  {
-    username: {
-      type: String,
-      required: true,
-      unique: true,   // No two players can have the same username
-      trim: true
-    },
-    displayName: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    country: {
-      type: String,
-      default: 'Unknown'
-    },
-    avatar: {
-      type: String, // URL to avatar image
-      default: ''
-    },
-    totalPlaytime: {
-      type: Number, // in minutes
-      default: 0
-    },
-    isActive: {
-      type: Boolean,
-      default: true
-    }
+const Player = sequelize.define('Player', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
   },
-  {
-    timestamps: true // adds createdAt and updatedAt automatically
-  }
-);
+  username: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+  },
+}, {
+  tableName: 'players',
+  timestamps: true,
+});
 
-module.exports = mongoose.model('Player', PlayerSchema);
+module.exports = Player;

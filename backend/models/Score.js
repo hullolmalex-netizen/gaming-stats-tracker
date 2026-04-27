@@ -1,37 +1,38 @@
-// models/Score.js
-// Represents a score achieved by a player in a specific game
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+const Player = require('./Player');
 
-const mongoose = require('mongoose');
-
-const ScoreSchema = new mongoose.Schema(
-  {
-    player: {
-      type: mongoose.Schema.Types.ObjectId, // Links to a Player document
-      ref: 'Player',
-      required: true
-    },
-    game: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    points: {
-      type: Number,
-      required: true,
-      min: 0 // score can't be negative
-    },
-    level: {
-      type: Number,
-      default: 1
-    },
-    achievedAt: {
-      type: Date,
-      default: Date.now
-    }
+const Score = sequelize.define('Score', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
   },
-  {
-    timestamps: true
-  }
-);
+  playerId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'players', key: 'id' },
+  },
+  gameName: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  points: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
+  scoredAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+  },
+}, {
+  tableName: 'scores',
+  timestamps: true,
+});
 
-module.exports = mongoose.model('Score', ScoreSchema);
+// Relationship: One Player → Many Scores
+Player.hasMany(Score, { foreignKey: 'playerId' });
+Score.belongsTo(Player, { foreignKey: 'playerId' });
+
+module.exports = Score;

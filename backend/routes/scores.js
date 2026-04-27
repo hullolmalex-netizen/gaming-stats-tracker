@@ -1,12 +1,29 @@
-// routes/scores.js
 const express = require('express');
 const router = express.Router();
-const { createScore, getScoresByPlayer } = require('../controllers/scoreController');
+const Score = require('../models/Score');
 
-router.route('/')
-  .post(createScore);              // POST /api/scores
+// GET all scores
+router.get('/', async (req, res) => {
+  try {
+    const scores = await Score.findAll();
+    res.json(scores);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-router.route('/:playerId')
-  .get(getScoresByPlayer);         // GET  /api/scores/:playerId
+// POST create a new score
+router.post('/', async (req, res) => {
+  try {
+    const { playerId, gameName, points } = req.body;
+    if (!playerId || !gameName || points === undefined) {
+      return res.status(400).json({ error: 'playerId, gameName, and points are required' });
+    }
+    const score = await Score.create({ playerId, gameName, points });
+    res.status(201).json(score);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;
