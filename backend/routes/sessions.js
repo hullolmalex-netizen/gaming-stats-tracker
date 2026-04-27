@@ -1,29 +1,28 @@
 const express = require('express');
 const router = express.Router();
-const Session = require('../models/Session');
+const { ValidationError } = require('sequelize');
+const { Session } = require('../models');
 
-// GET all sessions
-router.get('/', async (req, res) => {
-  try {
-    const sessions = await Session.findAll();
-    res.json(sessions);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+function handleError(res, e) {
+  if (e instanceof ValidationError) {
+    return res.status(400).json({ error: e.errors.map(err => err.message).join(', ') });
   }
-});
+  return res.status(500).json({ error: e.message });
+}
 
-// POST create a new session
 router.post('/', async (req, res) => {
   try {
-    const { playerId, gameName, durationMinutes } = req.body;
-    if (!playerId || !gameName || !durationMinutes) {
-      return res.status(400).json({ error: 'playerId, gameName, and durationMinutes are required' });
-    }
-    const session = await Session.create({ playerId, gameName, durationMinutes });
+    const { playerId, gameName, durationMinutes, playedAt } = req.body;
+    if (!playerId || !gameName || !durationMinutes)
+      return res.status(400).json({ error: 'playerId, gameName and durationMinutes are required' });
+    const session = await Session.create({
+      playerId: Number(playerId),
+      gameName,
+      durationMinutes: Number(durationMinutes),
+      playedAt: playedAt || new Date(),
+    });
     res.status(201).json(session);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (e) { handleError(res, e); }
 });
 
 module.exports = router;

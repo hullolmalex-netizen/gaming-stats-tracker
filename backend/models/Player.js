@@ -10,16 +10,20 @@ const Player = sequelize.define('Player', {
   username: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true,
+    unique: true,          // usernames must be unique
+    validate: {
+      notEmpty: { msg: 'Username cannot be empty' },
+      len: { args: [2, 30], msg: 'Username must be 2-30 characters' },
+    },
   },
   email: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true,
-  },
-  createdAt: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW,
+    unique: false,         // allow same email across players (e.g. test data)
+    validate: {
+      isEmail: { msg: 'Must be a valid email address' },
+      notEmpty: { msg: 'Email cannot be empty' },
+    },
   },
 }, {
   tableName: 'players',
