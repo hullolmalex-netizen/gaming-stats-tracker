@@ -4,44 +4,30 @@ import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-
-  private baseUrl = 'http://localhost:3000';
-
+  private base = 'http://localhost:3000';
   constructor(private http: HttpClient) {}
 
-  // Players
   getPlayers(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/players`);
+    return this.http.get<any[]>(`${this.base}/players`);
   }
 
   getPlayer(id: number): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/players/${id}`);
+    return this.http.get<any>(`${this.base}/players/${id}`);
   }
 
   createPlayer(data: { username: string; email: string }): Observable<any> {
-    return this.http.post(`${this.baseUrl}/players`, data);
+    return this.http.post<any>(`${this.base}/players`, data);
   }
 
-  // Sessions
-  getSessions(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/sessions`);
+  createSession(data: { playerId: number; gameName: string; durationMinutes: any; playedAt: string }): Observable<any> {
+    return this.http.post<any>(`${this.base}/sessions`, data);
   }
 
-  createSession(data: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/sessions`, data);
+  createScore(data: { playerId: number; gameName: string; points: any; scoredAt: string }): Observable<any> {
+    return this.http.post<any>(`${this.base}/scores`, data);
   }
 
-  // Scores
-  getScores(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/scores`);
-  }
-
-  createScore(data: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/scores`, data);
-  }
-
-  // Analytics
   getAnalytics(): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/analytics`);
+    return this.http.get<any>(`${this.base}/analytics`);
   }
 }
