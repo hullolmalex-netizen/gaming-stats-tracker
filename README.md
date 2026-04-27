@@ -93,9 +93,9 @@ ng serve
 
 ---
 
-## 👤 Author
+ Author
 
-**Ahmed Aziz Dimassi** — 2nd year Big Data student at EPI, Monastir 🇹🇳
+**Ahmed Aziz Dimassi** — 2nd year Big Data student at EPI
 
 ---
 
