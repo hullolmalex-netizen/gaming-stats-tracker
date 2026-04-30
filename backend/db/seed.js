@@ -1,6 +1,5 @@
 // Run: node db/seed.js
-// Safe to run multiple times — wipes old data first via truncate.
-
+// Works with SQLite. Safe to run multiple times.
 require('dotenv').config();
 const { sequelize, Player, Session, Score } = require('../models/index');
 
@@ -30,33 +29,28 @@ async function seed() {
     await sequelize.authenticate();
     console.log('✅ Connected to database.');
 
-    await sequelize.sync({ alter: true });
-    console.log('✅ Tables synced.');
+    // Sync tables without altering (SQLite-safe)
+    await sequelize.sync({ force: false });
+    console.log('✅ Tables ready.');
 
-    // Use truncate + cascade so foreign keys don't block deletion
-    // and unique constraints reset cleanly
-    await Score.destroy({ where: {}, truncate: true, cascade: true }).catch(() =>
-      Score.destroy({ where: {} })
-    );
-    await Session.destroy({ where: {}, truncate: true, cascade: true }).catch(() =>
-      Session.destroy({ where: {} })
-    );
-    await Player.destroy({ where: {}, truncate: true, cascade: true }).catch(() =>
-      Player.destroy({ where: {} })
-    );
+    // SQLite-safe deletion: disable FK checks, delete in order, re-enable
+    await sequelize.query('PRAGMA foreign_keys = OFF;');
+    await Score.destroy({ where: {} });
+    await Session.destroy({ where: {} });
+    await Player.destroy({ where: {} });
+    await sequelize.query('PRAGMA foreign_keys = ON;');
     console.log('🧹 Cleared old data.');
 
-    // Create players
-    const players = await Player.bulkCreate(PLAYERS, { validate: true });
+    // Insert fresh players
+    const players = await Player.bulkCreate(PLAYERS);
     console.log(`👥 Created ${players.length} players.`);
 
-    // Build sessions and scores
+    // Build sessions & scores
     const sessions = [];
     const scores   = [];
 
     for (const player of players) {
-      const sessionCount = rand(20, 40);
-      for (let i = 0; i < sessionCount; i++) {
+      for (let i = 0; i < rand(20, 40); i++) {
         sessions.push({
           playerId:        player.id,
           gameName:        randGame(),
@@ -64,9 +58,7 @@ async function seed() {
           playedAt:        randDate(90),
         });
       }
-
-      const scoreCount = rand(30, 60);
-      for (let i = 0; i < scoreCount; i++) {
+      for (let i = 0; i < rand(30, 60); i++) {
         scores.push({
           playerId: player.id,
           gameName: randGame(),
@@ -82,14 +74,13 @@ async function seed() {
     await Score.bulkCreate(scores);
     console.log(`🏆 Created ${scores.length} scores.`);
 
-    console.log('\n✅ Seed complete! Run: node server.js');
+    console.log('\n✅ Seed complete! Now run: node server.js');
     process.exit(0);
 
   } catch (err) {
     console.error('❌ Seed failed:', err.message);
-    // Print each validation error clearly so it\'s easy to debug
     if (err.errors) {
-      err.errors.forEach(e => console.error(`   → ${e.path}: ${e.message}`));
+      err.errors.forEach(e => console.error(`   → [${e.path}] ${e.message}`));
     }
     process.exit(1);
   }
