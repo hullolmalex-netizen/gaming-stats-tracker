@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Subscription } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTabsModule } from '@angular/material/tabs';
 import { ApiService } from '../../services/api.service';
+import { RefreshService } from '../../services/refresh.service';
 import { BarChartComponent } from '../../components/bar-chart/bar-chart.component';
 import { PieChartComponent } from '../../components/pie-chart/pie-chart.component';
 import { LineChartComponent } from '../../components/line-chart/line-chart.component';
@@ -10,7 +11,7 @@ import { LineChartComponent } from '../../components/line-chart/line-chart.compo
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatTabsModule, BarChartComponent, PieChartComponent, LineChartComponent],
+  imports: [CommonModule, MatIconModule, BarChartComponent, PieChartComponent, LineChartComponent],
   template: `
     <div class="container">
       <h1 class="page-title">🎮 Analytics Dashboard</h1>
@@ -23,11 +24,11 @@ import { LineChartComponent } from '../../components/line-chart/line-chart.compo
 
       <ng-container *ngIf="!loading">
 
-        <!-- KPI Cards (centered grid) -->
+        <!-- KPI Cards -->
         <div class="kpi-grid">
           <div class="kpi-card">
             <div class="kpi-icon-wrap purple">👥</div>
-            <div class="kpi-value">{{ analytics?.topScorers?.length || 0 }}</div>
+            <div class="kpi-value">{{ getActivePlayers() }}</div>
             <div class="kpi-label">Active Players</div>
           </div>
           <div class="kpi-card">
@@ -58,7 +59,7 @@ import { LineChartComponent } from '../../components/line-chart/line-chart.compo
           </div>
         </div>
 
-        <!-- Line Chart Full Width -->
+        <!-- Line Chart -->
         <div class="glass-card mt-20">
           <div class="card-title"><span>⏱️</span> Playtime per Player</div>
           <div class="chart-container">
@@ -66,8 +67,14 @@ import { LineChartComponent } from '../../components/line-chart/line-chart.compo
           </div>
         </div>
 
+        <!-- Empty state -->
+        <div *ngIf="isEmpty" class="glass-card mt-20" style="text-align:center;padding:48px">
+          <div style="font-size:48px;margin-bottom:16px">🎮</div>
+          <p style="color:var(--text-muted);font-size:16px">No data yet. Add players and sessions to see analytics.</p>
+        </div>
+
         <!-- Leaderboard -->
-        <div class="glass-card mt-20">
+        <div class="glass-card mt-20" *ngIf="!isEmpty">
           <div class="card-title"><span>📝</span> Leaderboard</div>
           <table class="stats-table">
             <thead>
@@ -92,50 +99,94 @@ import { LineChartComponent } from '../../components/line-chart/line-chart.compo
   `,
   styles: [`
     .loader-ring {
-      width: 56px; height: 56px;
-      border: 4px solid rgba(108,99,255,0.2);
-      border-top-color: #6c63ff;
-      border-radius: 50%;
-      margin: 0 auto;
-      animation: spin 0.8s linear infinite;
+      width:56px;height:56px;
+      border:4px solid rgba(108,99,255,0.2);
+      border-top-color:#6c63ff;
+      border-radius:50%;
+      margin:0 auto;
+      animation:spin 0.8s linear infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes spin { to { transform:rotate(360deg); } }
   `]
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   analytics: any = null;
   loading = true;
+  isEmpty = false;
+
   barLabels: string[] = [];
-  barData: number[] = [];
+  barData:   number[] = [];
   pieLabels: string[] = [];
-  pieData: number[] = [];
+  pieData:   number[] = [];
   lineLabels: string[] = [];
   lineDatasets: { label: string; data: number[]; color: string }[] = [];
 
-  constructor(private api: ApiService) {}
+  private sub?: Subscription;
+
+  constructor(
+    private api: ApiService,
+    private refreshService: RefreshService
+  ) {}
 
   ngOnInit() {
+    this.loadAnalytics();
+    // Re-fetch every time a player is created from Players page
+    this.sub = this.refreshService.refresh$.subscribe(() => this.loadAnalytics());
+  }
+
+  ngOnDestroy() {
+    this.sub?.unsubscribe();
+  }
+
+  loadAnalytics() {
+    this.loading = true;
     this.api.getAnalytics().subscribe({
-      next: (data) => { this.analytics = data; this.buildChartData(); this.loading = false; },
-      error: (err) => { console.error(err); this.loading = false; }
+      next: (data) => {
+        this.analytics = data;
+        this.isEmpty = !data.topScorers?.length && !data.gameActivity?.length;
+        this.buildChartData();
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Analytics error:', err);
+        this.loading = false;
+      }
     });
   }
 
   buildChartData() {
-    this.barLabels = this.analytics.topScorers.map((p: any) => p.Player?.username || '?');
-    this.barData   = this.analytics.topScorers.map((p: any) => Number(p.dataValues?.totalScore || 0));
-    this.pieLabels = this.analytics.gameActivity.map((g: any) => g.gameName);
-    this.pieData   = this.analytics.gameActivity.map((g: any) => Number(g.dataValues?.sessionCount || 0));
-    this.lineLabels = this.analytics.playtime.map((p: any) => p.Player?.username || '?');
-    this.lineDatasets = [{ label: 'Minutes Played', data: this.analytics.playtime.map((p: any) => Number(p.dataValues?.totalMinutes || 0)), color: '#6c63ff' }];
+    // Bar — top players by score
+    this.barLabels = this.analytics?.topScorers?.map((p: any) => p.Player?.username || '?') ?? [];
+    this.barData   = this.analytics?.topScorers?.map((p: any) => Number(p.dataValues?.totalScore ?? 0)) ?? [];
+
+    // Pie — sessions per game
+    this.pieLabels = this.analytics?.gameActivity?.map((g: any) => g.gameName) ?? [];
+    this.pieData   = this.analytics?.gameActivity?.map((g: any) => Number(g.dataValues?.sessionCount ?? 0)) ?? [];
+
+    // Line — playtime per player
+    this.lineLabels   = this.analytics?.playtime?.map((p: any) => p.Player?.username || '?') ?? [];
+    this.lineDatasets = [{
+      label: 'Minutes Played',
+      data:  this.analytics?.playtime?.map((p: any) => Number(p.dataValues?.totalMinutes ?? 0)) ?? [],
+      color: '#6c63ff'
+    }];
+  }
+
+  getActivePlayers(): number {
+    // Use playtime list length — every player who has at least 1 session
+    return this.analytics?.playtime?.length ?? 0;
   }
 
   getTotalSessions(): number {
-    return this.analytics?.gameActivity?.reduce((s: number, g: any) => s + Number(g.dataValues?.sessionCount || 0), 0) || 0;
+    return this.analytics?.gameActivity?.reduce(
+      (sum: number, g: any) => sum + Number(g.dataValues?.sessionCount ?? 0), 0
+    ) ?? 0;
   }
 
   getTotalHours(): string {
-    const m = this.analytics?.playtime?.reduce((s: number, p: any) => s + Number(p.dataValues?.totalMinutes || 0), 0) || 0;
-    return (m / 60).toFixed(0);
+    const minutes = this.analytics?.playtime?.reduce(
+      (sum: number, p: any) => sum + Number(p.dataValues?.totalMinutes ?? 0), 0
+    ) ?? 0;
+    return (minutes / 60).toFixed(1);
   }
 }
