@@ -1,5 +1,5 @@
 const express = require('express');
-const cors = require('cors');
+const cors    = require('cors');
 require('dotenv').config();
 
 const { sequelize } = require('./models/index');
@@ -8,7 +8,7 @@ const sessionRoutes   = require('./routes/sessions');
 const scoreRoutes     = require('./routes/scores');
 const analyticsRoutes = require('./routes/analytics');
 
-const app = express();
+const app  = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
@@ -25,12 +25,14 @@ app.use('/sessions',  sessionRoutes);
 app.use('/scores',    scoreRoutes);
 app.use('/analytics', analyticsRoutes);
 
-// Sync DB then start server
+// Connect then start — force:false means "create tables if missing, never alter"
 sequelize.authenticate()
-  .then(() => sequelize.sync({ alter: true }))
+  .then(() => sequelize.sync({ force: false }))
   .then(() => {
-    console.log('✅ Database ready.');
-    app.listen(PORT, () => console.log(`🚀 Server on http://localhost:${PORT}`));
+    app.listen(PORT, () => {
+      console.log('✅ Database ready.');
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
   })
   .catch(err => {
     console.error('❌ DB Error:', err.message);
